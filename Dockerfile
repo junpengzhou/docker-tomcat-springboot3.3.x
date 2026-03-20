@@ -1,27 +1,27 @@
 # ============================================================
-# 基础镜像：AlmaLinux 9（RHEL 兼容，支持 dnf/yum）
+# 基础镜像：AlmaLinux 10（RHEL 兼容，支持 dnf/yum）
 # ============================================================
-FROM almalinux:9-minimal AS base
+FROM almalinux:10-minimal AS base
 
 # ============================================================
 # 1. 配置阿里云 yum 源
 # ============================================================
 RUN cat > /etc/yum.repos.d/aliyun-base.repo <<'EOF'
 [baseos]
-name=AlmaLinux 9 - BaseOS - Aliyun
-baseurl=https://mirrors.aliyun.com/almalinux/9/BaseOS/$basearch/os/
+name=AlmaLinux 10 - BaseOS - Aliyun
+baseurl=https://mirrors.aliyun.com/almalinux/10/BaseOS/$basearch/os/
 gpgcheck=0
 enabled=1
 
 [appstream]
-name=AlmaLinux 9 - AppStream - Aliyun
-baseurl=https://mirrors.aliyun.com/almalinux/9/AppStream/$basearch/os/
+name=AlmaLinux 10 - AppStream - Aliyun
+baseurl=https://mirrors.aliyun.com/almalinux/10/AppStream/$basearch/os/
 gpgcheck=0
 enabled=1
 
 [epel]
-name=Extra Packages for Enterprise Linux 9 - Aliyun
-baseurl=https://mirrors.aliyun.com/epel/9/Everything/$basearch/
+name=Extra Packages for Enterprise Linux 10 - Aliyun
+baseurl=https://mirrors.aliyun.com/epel/10/Everything/$basearch/
 gpgcheck=0
 enabled=1
 EOF
