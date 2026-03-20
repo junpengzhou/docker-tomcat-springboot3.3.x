@@ -102,7 +102,7 @@ RUN cat > "${CATALINA_HOME}/conf/server.xml" <<'EOF'
 
   <Service name="Catalina">
 
-    <!-- HTTP/1.1 NIO2 Connector：高性能非阻塞 -->
+    <!-- HTTP/1.1 NIO2 Connector: 高性能非阻塞 -->
     <Connector port="8080"
                protocol="org.apache.coyote.http11.Http11Nio2Protocol"
                maxThreads="500"
