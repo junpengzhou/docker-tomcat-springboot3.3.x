@@ -50,12 +50,7 @@ ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 RUN set -eux; \
     ARCH=$(uname -m); \
-    case "${ARCH}" in \
-        x86_64)  JDK_ARCH='x64'  ;; \
-        aarch64) JDK_ARCH='aarch64' ;; \
-        *) echo "Unsupported arch: ${ARCH}" && exit 1 ;; \
-    esac; \
-    JDK_URL="https://mirrors.aliyun.com/adoptium/releases/temurin21-binaries/jdk-21.0.6+7/OpenJDK21U-jdk_${JDK_ARCH}_linux_hotspot_21.0.6_7.tar.gz"; \
+    JDK_URL="https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.9%2B10/OpenJDK21U-jdk_x64_linux_hotspot_21.0.9_10.tar.gz"; \
     curl -fsSL -o /tmp/jdk.tar.gz "${JDK_URL}" \
     && mkdir -p /opt/java \
     && tar -xzf /tmp/jdk.tar.gz -C /opt/java \
@@ -66,7 +61,7 @@ RUN set -eux; \
 # ============================================================
 # 4. 安装 Tomcat 10.1.x（适配 Spring Boot 3.3.x / Jakarta EE 10）
 # ============================================================
-ENV TOMCAT_VERSION=10.1.34
+ENV TOMCAT_VERSION=10.1.52
 ENV CATALINA_HOME=/opt/tomcat
 ENV PATH="${CATALINA_HOME}/bin:${PATH}"
 
@@ -146,16 +141,17 @@ EOF
 ENV JAVA_OPTS="\
 -Xms512m \
 -XX:MetaspaceSize=256m \
--XX:MaxMetaspaceSize=512m \
+-XX:MaxMetaspaceSize=600m \
 -XX:+UseG1GC \
 -XX:+UseStringDeduplication \
--XX:AutoBoxCacheMax=20000 \
+-XX:AutoBoxCacheMax=100000 \
 -XX:+HeapDumpOnOutOfMemoryError \
 -XX:HeapDumpPath=/opt/tomcat/logs/heapdump.hprof \
 -XX:+ExitOnOutOfMemoryError \
 -Djava.security.egd=file:/dev/./urandom \
 -Dfile.encoding=UTF-8 \
 -XX:+UseContainerSupport \
+-XX:+FlightRecorder \
 -XX:MaxRAMPercentage=75.0 \
 "
 
