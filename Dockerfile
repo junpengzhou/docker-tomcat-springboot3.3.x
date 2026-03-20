@@ -1,0 +1,194 @@
+# ============================================================
+# 基础镜像：AlmaLinux 9（RHEL 兼容，支持 dnf/yum）
+# ============================================================
+FROM almalinux:9-minimal AS base
+
+# ============================================================
+# 1. 配置阿里云 yum 源
+# ============================================================
+RUN cat > /etc/yum.repos.d/aliyun-base.repo <<'EOF'
+[baseos]
+name=AlmaLinux 9 - BaseOS - Aliyun
+baseurl=https://mirrors.aliyun.com/almalinux/9/BaseOS/$basearch/os/
+gpgcheck=0
+enabled=1
+
+[appstream]
+name=AlmaLinux 9 - AppStream - Aliyun
+baseurl=https://mirrors.aliyun.com/almalinux/9/AppStream/$basearch/os/
+gpgcheck=0
+enabled=1
+
+[epel]
+name=Extra Packages for Enterprise Linux 9 - Aliyun
+baseurl=https://mirrors.aliyun.com/epel/9/Everything/$basearch/
+gpgcheck=0
+enabled=1
+EOF
+
+# ============================================================
+# 2. 安装常用工具：curl, vim, htop, telnet, procps, net-tools 等
+# ============================================================
+RUN microdnf install -y \
+        curl wget tar gzip unzip \
+        vim-enhanced \
+        htop \
+        telnet \
+        net-tools \
+        procps-ng \
+        findutils \
+        shadow-utils \
+        fontconfig \
+    && microdnf clean all
+
+# ============================================================
+# 3. 安装 JDK 21（Eclipse Temurin / Adoptium）
+# ============================================================
+ENV JAVA_VERSION=21
+ENV JAVA_HOME=/opt/java/jdk-21
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
+
+RUN set -eux; \
+    ARCH=$(uname -m); \
+    case "${ARCH}" in \
+        x86_64)  JDK_ARCH='x64'  ;; \
+        aarch64) JDK_ARCH='aarch64' ;; \
+        *) echo "Unsupported arch: ${ARCH}" && exit 1 ;; \
+    esac; \
+    JDK_URL="https://mirrors.aliyun.com/adoptium/releases/temurin21-binaries/jdk-21.0.6+7/OpenJDK21U-jdk_${JDK_ARCH}_linux_hotspot_21.0.6_7.tar.gz"; \
+    curl -fsSL -o /tmp/jdk.tar.gz "${JDK_URL}" \
+    && mkdir -p /opt/java \
+    && tar -xzf /tmp/jdk.tar.gz -C /opt/java \
+    && mv /opt/java/jdk-21* "${JAVA_HOME}" \
+    && rm -f /tmp/jdk.tar.gz \
+    && java -version
+
+# ============================================================
+# 4. 安装 Tomcat 10.1.x（适配 Spring Boot 3.3.x / Jakarta EE 10）
+# ============================================================
+ENV TOMCAT_VERSION=10.1.34
+ENV CATALINA_HOME=/opt/tomcat
+ENV PATH="${CATALINA_HOME}/bin:${PATH}"
+
+RUN set -eux; \
+    curl -fsSL -o /tmp/tomcat.tar.gz \
+        "https://mirrors.aliyun.com/apache/tomcat/tomcat-10/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz" \
+    && mkdir -p "${CATALINA_HOME}" \
+    && tar -xzf /tmp/tomcat.tar.gz --strip-components=1 -C "${CATALINA_HOME}" \
+    && rm -f /tmp/tomcat.tar.gz \
+    && rm -rf "${CATALINA_HOME}/webapps/ROOT" \
+               "${CATALINA_HOME}/webapps/docs" \
+               "${CATALINA_HOME}/webapps/examples" \
+               "${CATALINA_HOME}/webapps/host-manager" \
+               "${CATALINA_HOME}/webapps/manager" \
+    && chmod +x "${CATALINA_HOME}/bin/"*.sh
+
+# ============================================================
+# 5. 优化 server.xml
+#    - 使用 NIO2 协议（高性能非阻塞 I/O）
+#    - 调整线程池、连接超时、Keep-Alive 等参数
+#    - 禁用 AJP 连接器
+#    - 关闭自动部署（生产环境安全加固）
+# ============================================================
+RUN cat > "${CATALINA_HOME}/conf/server.xml" <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<Server port="8005" shutdown="SHUTDOWN">
+
+  <Listener className="org.apache.catalina.startup.VersionLoggerListener" />
+  <Listener className="org.apache.catalina.core.AprLifecycleListener" SSLEngine="on" />
+  <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener" />
+  <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
+  <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
+
+  <Service name="Catalina">
+
+    <!-- HTTP/1.1 NIO2 Connector：高性能非阻塞 -->
+    <Connector port="8080"
+               protocol="org.apache.coyote.http11.Http11Nio2Protocol"
+               maxThreads="500"
+               minSpareThreads="30"
+               acceptCount="200"
+               connectionTimeout="15000"
+               keepAliveTimeout="30000"
+               maxKeepAliveRequests="200"
+               maxConnections="10000"
+               enableLookups="false"
+               URIEncoding="UTF-8"
+               compression="on"
+               compressionMinSize="2048"
+               compressibleMimeType="text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json,application/xml"
+               server="iFinTech"
+               relaxedQueryChars="[]|{}^&#x5c;&#x60;&lt;&gt;"
+               />
+
+    <Engine name="Catalina" defaultHost="localhost">
+
+      <!-- Access Log -->
+      <Host name="localhost" appBase="webapps"
+            unpackWARs="true" autoDeploy="false">
+
+        <Valve className="org.apache.catalina.valves.AccessLogValve"
+               directory="logs"
+               prefix="access_log"
+               suffix=".log"
+               pattern="%h %l %u %t &quot;%r&quot; %s %b %D"
+               rotatable="true"
+               maxDays="7" />
+      </Host>
+    </Engine>
+  </Service>
+</Server>
+EOF
+
+# ============================================================
+# 6. 优化 JVM 参数（适用于容器化部署的 JDK 21）
+# ============================================================
+ENV JAVA_OPTS="\
+-Xms512m \
+-XX:MetaspaceSize=256m \
+-XX:MaxMetaspaceSize=512m \
+-XX:+UseG1GC \
+-XX:+UseStringDeduplication \
+-XX:AutoBoxCacheMax=20000 \
+-XX:+HeapDumpOnOutOfMemoryError \
+-XX:HeapDumpPath=/opt/tomcat/logs/heapdump.hprof \
+-XX:+ExitOnOutOfMemoryError \
+-Djava.security.egd=file:/dev/./urandom \
+-Dfile.encoding=UTF-8 \
+-XX:+UseContainerSupport \
+-XX:MaxRAMPercentage=75.0 \
+"
+
+ENV CATALINA_OPTS="\
+-Djava.net.preferIPv4Stack=true \
+"
+
+# 写入 setenv.sh（Tomcat 启动时自动加载）
+RUN cat > "${CATALINA_HOME}/bin/setenv.sh" <<'SETENV'
+#!/bin/bash
+export JAVA_OPTS="${JAVA_OPTS}"
+export CATALINA_OPTS="${CATALINA_OPTS}"
+SETENV
+RUN chmod +x "${CATALINA_HOME}/bin/setenv.sh"
+
+# ============================================================
+# 7. 安装 Arthas（阿里巴巴 Java 诊断工具）
+# ============================================================
+ENV ARTHAS_HOME=/opt/arthas
+
+RUN mkdir -p "${ARTHAS_HOME}" \
+    && curl -fsSL -o /tmp/arthas.zip \
+        "https://arthas.aliyun.com/download/latest_version?mirror=aliyun" \
+    && unzip -o /tmp/arthas.zip -d "${ARTHAS_HOME}" \
+    && rm -f /tmp/arthas.zip \
+    && chmod +x "${ARTHAS_HOME}/arthas-boot.jar" 2>/dev/null || true
+
+# ============================================================
+# 8. 暴露端口 & 启动
+# ============================================================
+EXPOSE 8080
+
+WORKDIR ${CATALINA_HOME}
+USER root
+
+CMD ["catalina.sh", "run"]
