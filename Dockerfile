@@ -61,13 +61,13 @@ RUN set -eux; \
 # ============================================================
 # 4. 安装 Tomcat 10.1.x（适配 Spring Boot 3.3.x / Jakarta EE 10）
 # ============================================================
-ENV TOMCAT_VERSION=10.1.52
+ENV TOMCAT_VERSION=10.1.53
 ENV CATALINA_HOME=/opt/tomcat
 ENV PATH="${CATALINA_HOME}/bin:${PATH}"
 
 RUN set -eux; \
     curl -fsSL -o /tmp/tomcat.tar.gz \
-        "https://mirrors.aliyun.com/apache/tomcat/tomcat-10/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz" \
+        "https://dlcdn.apache.org/tomcat/tomcat-10/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz" \
     && mkdir -p "${CATALINA_HOME}" \
     && tar -xzf /tmp/tomcat.tar.gz --strip-components=1 -C "${CATALINA_HOME}" \
     && rm -f /tmp/tomcat.tar.gz \
@@ -90,7 +90,7 @@ RUN cat > "${CATALINA_HOME}/conf/server.xml" <<'EOF'
 <Server port="8005" shutdown="SHUTDOWN">
 
   <Listener className="org.apache.catalina.startup.VersionLoggerListener" />
-  <Listener className="org.apache.catalina.core.AprLifecycleListener" SSLEngine="on" />
+  <Listener className="org.apache.catalina.core.AprLifecycleListener" />
   <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener" />
   <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
   <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
@@ -102,7 +102,6 @@ RUN cat > "${CATALINA_HOME}/conf/server.xml" <<'EOF'
                protocol="org.apache.coyote.http11.Http11Nio2Protocol"
                maxThreads="500"
                minSpareThreads="30"
-               acceptCount="200"
                connectionTimeout="15000"
                keepAliveTimeout="30000"
                maxKeepAliveRequests="200"
@@ -112,7 +111,6 @@ RUN cat > "${CATALINA_HOME}/conf/server.xml" <<'EOF'
                compression="on"
                compressionMinSize="2048"
                compressibleMimeType="text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json,application/xml"
-               server="iFinTech"
                relaxedQueryChars="[]|{}^&#x5c;&#x60;&lt;&gt;"
                />
 
@@ -151,7 +149,6 @@ ENV JAVA_OPTS="\
 -Djava.security.egd=file:/dev/./urandom \
 -Dfile.encoding=UTF-8 \
 -XX:+UseContainerSupport \
--XX:+FlightRecorder \
 -XX:MaxRAMPercentage=75.0 \
 "
 
