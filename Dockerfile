@@ -4,6 +4,11 @@
 FROM almalinux:10-minimal AS base
 
 # ============================================================
+# 维护信息公告
+# ============================================================
+LABEL maintainer="Frankzhou <frankzhou007@163.com>"
+
+# ============================================================
 # 1. 配置阿里云 yum 源
 # ============================================================
 RUN cat > /etc/yum.repos.d/aliyun-base.repo <<'EOF'
@@ -144,7 +149,7 @@ ENV JAVA_OPTS="\
 -XX:+UseStringDeduplication \
 -XX:AutoBoxCacheMax=100000 \
 -XX:+HeapDumpOnOutOfMemoryError \
--XX:HeapDumpPath=/opt/tomcat/logs/heapdump.hprof \
+-XX:HeapDumpPath=${CATALINA_HOME}/logs/heapdump.hprof \
 -XX:+ExitOnOutOfMemoryError \
 -Djava.security.egd=file:/dev/./urandom \
 -Dfile.encoding=UTF-8 \
