@@ -85,6 +85,7 @@ RUN set -eux; \
 # ============================================================
 # 4. 安装 Tomcat 10.1.x（适配 Spring Boot 3.3.x / Jakarta EE 10）
 # ============================================================
+ENV TOMCAT_VERSION=10.1.53
 ENV CATALINA_HOME=/opt/tomcat
 ENV CATALINA_BASE="${CATALINA_HOME}"
 ENV PATH="${CATALINA_HOME}/bin:${PATH}"
