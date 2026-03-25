@@ -31,6 +31,9 @@ gpgcheck=0
 enabled=1
 EOF
 
+# 需要有共享的变量提到最上面来了
+ENV ARTHAS_HOME=/opt/arthas
+
 # ============================================================
 # 2.1 安装常用工具：curl, vim, htop, telnet, procps, net-tools 等
 # ============================================================
@@ -49,7 +52,7 @@ RUN microdnf install -y \
 # ============================================================
 # 2.1 配置常用 shell 别名（ll, la 等）
 # ============================================================
-RUN cat > /etc/profile.d/aliases.sh <<'EOF'
+RUN cat > /etc/profile.d/aliases.sh <<EOF
 alias ll='ls -lh --color=auto'
 alias la='ls -lAh --color=auto'
 alias l='ls -CF --color=auto'
@@ -59,6 +62,7 @@ alias df='df -h'
 alias du='du -h'
 alias free='free -h'
 alias cls='clear'
+alias arthas='java -jar ${ARTHAS_HOME}/arthas-boot.jar'
 EOF
 
 # ============================================================
@@ -81,7 +85,6 @@ RUN set -eux; \
 # ============================================================
 # 4. 安装 Tomcat 10.1.x（适配 Spring Boot 3.3.x / Jakarta EE 10）
 # ============================================================
-ENV TOMCAT_VERSION=10.1.53
 ENV CATALINA_HOME=/opt/tomcat
 ENV CATALINA_BASE="${CATALINA_HOME}"
 ENV PATH="${CATALINA_HOME}/bin:${PATH}"
@@ -181,7 +184,6 @@ RUN chmod +x "${CATALINA_HOME}/bin/setenv.sh"
 # ============================================================
 # 7. 安装 Arthas（阿里巴巴 Java 诊断工具）
 # ============================================================
-ENV ARTHAS_HOME=/opt/arthas
 
 RUN mkdir -p "${ARTHAS_HOME}" \
     && curl -fsSL -o /tmp/arthas.zip \
