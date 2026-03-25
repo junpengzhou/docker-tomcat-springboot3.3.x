@@ -58,7 +58,7 @@ RUN set -eux; \
     JDK_URL="https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.9%2B10/OpenJDK21U-jdk_x64_linux_hotspot_21.0.9_10.tar.gz"; \
     curl -fsSL -o /tmp/jdk.tar.gz "${JDK_URL}" \
     && mkdir -p /opt/java \
-    && tar -xzf /tmp/jdk.tar.gz -C /opt/java \
+    && tar -zxf /tmp/jdk.tar.gz -C /opt/java \
     && mv /opt/java/jdk-21* "${JAVA_HOME}" \
     && rm -f /tmp/jdk.tar.gz \
     && java -version
@@ -68,19 +68,21 @@ RUN set -eux; \
 # ============================================================
 ENV TOMCAT_VERSION=10.1.53
 ENV CATALINA_HOME=/opt/tomcat
+ENV CATALINA_BASE="${CATALINA_HOME}"
 ENV PATH="${CATALINA_HOME}/bin:${PATH}"
 
 RUN set -eux; \
     curl -fsSL -o /tmp/tomcat.tar.gz \
         "https://dlcdn.apache.org/tomcat/tomcat-10/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz" \
     && mkdir -p "${CATALINA_HOME}" \
-    && tar -xzf /tmp/tomcat.tar.gz --strip-components=1 -C "${CATALINA_HOME}" \
+    && tar -zxf /tmp/tomcat.tar.gz --strip-components=1 -C "${CATALINA_HOME}" \
     && rm -f /tmp/tomcat.tar.gz \
     && rm -rf "${CATALINA_HOME}/webapps/ROOT" \
                "${CATALINA_HOME}/webapps/docs" \
                "${CATALINA_HOME}/webapps/examples" \
                "${CATALINA_HOME}/webapps/host-manager" \
                "${CATALINA_HOME}/webapps/manager" \
+               "${CATALINA_HOME}/temp/*" \
     && chmod +x "${CATALINA_HOME}/bin/"*.sh
 
 # ============================================================
@@ -141,32 +143,23 @@ EOF
 # ============================================================
 # 6. 优化 JVM 参数（适用于容器化部署的 JDK 21）
 # ============================================================
-ENV JAVA_OPTS="\
+ENV JAVA_OPTS="-Dfile.encoding=UTF-8 \
 -Xms512m \
 -XX:MetaspaceSize=256m \
 -XX:MaxMetaspaceSize=600m \
 -XX:+UseG1GC \
 -XX:+UseStringDeduplication \
 -XX:AutoBoxCacheMax=100000 \
--XX:+HeapDumpOnOutOfMemoryError \
--XX:HeapDumpPath=${CATALINA_HOME}/logs/heapdump.hprof \
--XX:+ExitOnOutOfMemoryError \
 -Djava.security.egd=file:/dev/./urandom \
--Dfile.encoding=UTF-8 \
--XX:+UseContainerSupport \
--XX:MaxRAMPercentage=75.0 \
-"
-
-ENV CATALINA_OPTS="\
--Djava.net.preferIPv4Stack=true \
-"
+-XX:+HeapDumpOnOutOfMemoryError \
+-XX:HeapDumpPath=${CATALINA_HOME}/logs/heap_dump.hprof"
 
 # 写入 setenv.sh（Tomcat 启动时自动加载）
 # 注意：使用 <<SETENV（无引号）让变量在构建时展开，heredoc的用法
 RUN cat > "${CATALINA_HOME}/bin/setenv.sh" <<EOF
 #!/bin/bash
 export JAVA_OPTS="${JAVA_OPTS}"
-export CATALINA_OPTS="${CATALINA_OPTS}"
+export CATALINA_PID="${CATALINA_HOME}/tomcat.pid"
 EOF
 RUN chmod +x "${CATALINA_HOME}/bin/setenv.sh"
 
