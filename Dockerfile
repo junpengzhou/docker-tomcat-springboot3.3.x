@@ -85,7 +85,7 @@ RUN set -eux; \
 #    - 禁用 AJP 连接器
 #    - 关闭自动部署（生产环境安全加固）
 # ============================================================
-RUN cat > "${CATALINA_HOME}/conf/server.xml" <<'EOF'
+RUN cat > "${CATALINA_HOME}/conf/server.xml" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <Server port="8005" shutdown="SHUTDOWN">
 
@@ -157,11 +157,12 @@ ENV CATALINA_OPTS="\
 "
 
 # 写入 setenv.sh（Tomcat 启动时自动加载）
-RUN cat > "${CATALINA_HOME}/bin/setenv.sh" <<'SETENV'
+# 注意：使用 <<SETENV（无引号）让变量在构建时展开，heredoc的用法
+RUN cat > "${CATALINA_HOME}/bin/setenv.sh" <<EOF
 #!/bin/bash
 export JAVA_OPTS="${JAVA_OPTS}"
 export CATALINA_OPTS="${CATALINA_OPTS}"
-SETENV
+EOF
 RUN chmod +x "${CATALINA_HOME}/bin/setenv.sh"
 
 # ============================================================
