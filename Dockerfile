@@ -32,7 +32,7 @@ enabled=1
 EOF
 
 # ============================================================
-# 2. 安装常用工具：curl, vim, htop, telnet, procps, net-tools 等
+# 2.1 安装常用工具：curl, vim, htop, telnet, procps, net-tools 等
 # ============================================================
 RUN microdnf install -y \
         curl wget tar gzip unzip \
@@ -45,6 +45,21 @@ RUN microdnf install -y \
         shadow-utils \
         fontconfig \
     && microdnf clean all
+
+# ============================================================
+# 2.1 配置常用 shell 别名（ll, la 等）
+# ============================================================
+RUN cat > /etc/profile.d/aliases.sh <<'EOF'
+alias ll='ls -lh --color=auto'
+alias la='ls -lAh --color=auto'
+alias l='ls -CF --color=auto'
+alias ls='ls --color=auto'
+alias grep='grep --color=auto'
+alias df='df -h'
+alias du='du -h'
+alias free='free -h'
+alias cls='clear'
+EOF
 
 # ============================================================
 # 3. 安装 JDK 21（Eclipse Temurin / Adoptium）
