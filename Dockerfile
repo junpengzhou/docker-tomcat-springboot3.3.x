@@ -126,8 +126,9 @@ RUN cat > "${CATALINA_HOME}/conf/server.xml" <<EOF
     <!-- HTTP/1.1 NIO2 Connector: 高性能非阻塞 -->
     <Connector port="8080"
                protocol="org.apache.coyote.http11.Http11Nio2Protocol"
-               maxThreads="500"
+               maxThreads="800"
                minSpareThreads="30"
+               acceptCount="300"
                connectionTimeout="15000"
                keepAliveTimeout="30000"
                maxKeepAliveRequests="200"
