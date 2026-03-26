@@ -126,9 +126,10 @@ RUN cat > "${CATALINA_HOME}/conf/server.xml" <<EOF
     <!-- HTTP/1.1 NIO2 Connector: 高性能非阻塞 -->
     <Connector port="8080"
                protocol="org.apache.coyote.http11.Http11Nio2Protocol"
-               maxThreads="800"
-               minSpareThreads="30"
-               acceptCount="300"
+               maxThreads="1000"
+               minSpareThreads="50"
+               maxSpareThreads="300"
+               acceptCount="1000"
                connectionTimeout="15000"
                keepAliveTimeout="30000"
                maxKeepAliveRequests="200"
@@ -144,8 +145,7 @@ RUN cat > "${CATALINA_HOME}/conf/server.xml" <<EOF
     <Engine name="Catalina" defaultHost="localhost">
 
       <!-- Access Log -->
-      <Host name="localhost" appBase="webapps"
-            unpackWARs="true" autoDeploy="false">
+      <Host name="localhost" appBase="webapps" unpackWARs="true" autoDeploy="false">
 
         <Valve className="org.apache.catalina.valves.AccessLogValve"
                directory="logs"
@@ -153,7 +153,8 @@ RUN cat > "${CATALINA_HOME}/conf/server.xml" <<EOF
                suffix=".log"
                pattern="%h %l %u %t &quot;%r&quot; %s %b %D"
                rotatable="true"
-               maxDays="7" />
+               maxDays="7"
+        />
       </Host>
     </Engine>
   </Service>
