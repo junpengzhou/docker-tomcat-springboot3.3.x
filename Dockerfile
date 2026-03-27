@@ -183,7 +183,7 @@ RUN cat > "${CATALINA_HOME}/bin/setenv.sh" <<EOF
 export JAVA_OPTS="${JAVA_OPTS}"
 export CATALINA_PID="${CATALINA_HOME}/tomcat.pid"
 export CATALINA_OUT="${CATALINA_HOME}/logs/catalina.out"
-export CATALINA_OUT_CMD="/usr/sbin/cronolog --symlink=${CATALINA_HOME}/logs/catalina.out \
+export CATALINA_OUT_CMD="cronolog --symlink=${CATALINA_HOME}/logs/catalina.out \
          ${CATALINA_HOME}/logs/catalina.%Y-%m-%d.out"
 EOF
 RUN chmod +x "${CATALINA_HOME}/bin/setenv.sh"
@@ -204,7 +204,9 @@ RUN mkdir -p "${ARTHAS_HOME}" \
 # ============================================================
 RUN cat > "${CATALINA_HOME}/bin/launch.sh" <<EOF
 #!/bin/bash
-exec catalina.sh run 2>&1 | cronolog --symlink=${LOG_DIR}/catalina.out ${LOG_DIR}/catalina.%Y-%m-%d.out
+LOG_DIR=${CATALINA_HOME}/logs
+OUT_FILE="${LOG_DIR}/catalina.out"
+exec catalina.sh run >> ${OUT_FILE} 2>&1
 EOF
 RUN chmod +x "${CATALINA_HOME}/bin/launch.sh"
 
