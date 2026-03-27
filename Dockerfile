@@ -204,9 +204,16 @@ RUN mkdir -p "${ARTHAS_HOME}" \
 # ============================================================
 RUN cat > "${CATALINA_HOME}/bin/launch.sh" <<EOF
 #!/bin/bash
-LOG_DIR=${CATALINA_HOME}/logs
-OUT_FILE="${LOG_DIR}/catalina.out"
-exec catalina.sh run >> ${OUT_FILE} 2>&1
+mkdir -p ${CATALINA_HOME}/fifo
+
+rm -f ${CATALINA_HOME}/fifo/catalina.fifo
+mkfifo ${CATALINA_HOME}/fifo/catalina.fifo
+
+# 后台运行 cronolog，从 FIFO 读取日志
+cronolog --symlink=${CATALINA_HOME}/logs/catalina.out \
+ ${CATALINA_HOME}/logs/catalina.%Y-%m-%d.out < ${CATALINA_HOME}/fifo/catalina.fifo &
+
+exec catalina.sh run >> ${CATALINA_HOME}/fifo/catalina.fifo 2>&1
 EOF
 RUN chmod +x "${CATALINA_HOME}/bin/launch.sh"
 
