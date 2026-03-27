@@ -204,7 +204,7 @@ RUN mkdir -p "${ARTHAS_HOME}" \
 # ============================================================
 RUN cat > "${CATALINA_HOME}/bin/launch.sh" <<EOF
 #!/bin/bash
-exec catalina.sh run 2>&1 | tee ${CATALINA_HOME}/logs/catalina.out
+exec catalina.sh run 2>&1 | cronolog --symlink=${LOG_DIR}/catalina.out ${LOG_DIR}/catalina.%Y-%m-%d.out
 EOF
 RUN chmod +x "${CATALINA_HOME}/bin/launch.sh"
 
