@@ -35,7 +35,7 @@ EOF
 ENV ARTHAS_HOME=/opt/arthas
 
 # ============================================================
-# 2.1 安装常用工具：curl, vim, htop, telnet, procps, net-tools 等
+# 2.1 安装常用工具：curl, vim, htop, telnet, procps, net-tools, cronolog 等
 # ============================================================
 RUN microdnf install -y \
         curl wget tar gzip unzip \
@@ -47,6 +47,7 @@ RUN microdnf install -y \
         findutils \
         shadow-utils \
         fontconfig \
+        cronolog \
     && microdnf clean all
 
 # ============================================================
@@ -181,6 +182,9 @@ RUN cat > "${CATALINA_HOME}/bin/setenv.sh" <<EOF
 #!/bin/bash
 export JAVA_OPTS="${JAVA_OPTS}"
 export CATALINA_PID="${CATALINA_HOME}/tomcat.pid"
+export CATALINA_OUT="${CATALINA_HOME}/logs/catalina.out"
+export CATALINA_OUT_CMD="/usr/sbin/cronolog --symlink=${CATALINA_HOME}/logs/catalina.out \
+         ${CATALINA_HOME}/logs/catalina.%Y-%m-%d.out"
 EOF
 RUN chmod +x "${CATALINA_HOME}/bin/setenv.sh"
 
@@ -196,11 +200,20 @@ RUN mkdir -p "${ARTHAS_HOME}" \
     && chmod +x "${ARTHAS_HOME}/arthas-boot.jar" 2>/dev/null || true
 
 # ============================================================
-# 8. 暴露端口 & 启动
+# 8. 创建我的自定义启动脚本
+# ============================================================
+RUN cat > "${CATALINA_HOME}/bin/launch.sh" <<EOF
+#!/bin/bash
+exec catalina.sh run 2>&1 | tee ${CATALINA_HOME}/logs/catalina.out
+EOF
+RUN chmod +x "${CATALINA_HOME}/bin/launch.sh"
+
+# ============================================================
+# 9. 暴露端口 & 启动
 # ============================================================
 EXPOSE 8080
 
 WORKDIR ${CATALINA_HOME}
 USER root
 
-CMD ["catalina.sh", "run"]
+CMD ["launch.sh"]
