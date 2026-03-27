@@ -204,15 +204,18 @@ RUN mkdir -p "${ARTHAS_HOME}" \
 # ============================================================
 RUN cat > "${CATALINA_HOME}/bin/launch.sh" <<EOF
 #!/bin/bash
+# Create fifo directory if not exists
 mkdir -p ${CATALINA_HOME}/fifo
 
+# Create FIFO for log rotation
 rm -f ${CATALINA_HOME}/fifo/catalina.fifo
 mkfifo ${CATALINA_HOME}/fifo/catalina.fifo
 
-# 后台运行 cronolog，从 FIFO 读取日志
+# Use Cronolog to rotate logs from FIFO
 cronolog --symlink=${CATALINA_HOME}/logs/catalina.out \
  ${CATALINA_HOME}/logs/catalina.%Y-%m-%d.out < ${CATALINA_HOME}/fifo/catalina.fifo &
 
+# Start Tomcat with log rotation fifo, and run in the pid 1
 exec catalina.sh run >> ${CATALINA_HOME}/fifo/catalina.fifo 2>&1
 EOF
 RUN chmod +x "${CATALINA_HOME}/bin/launch.sh"
