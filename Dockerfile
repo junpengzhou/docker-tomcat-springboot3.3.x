@@ -212,8 +212,8 @@ rm -f ${CATALINA_HOME}/fifo/catalina.fifo
 mkfifo ${CATALINA_HOME}/fifo/catalina.fifo
 
 # Use Cronolog to rotate logs from FIFO
-cronolog --symlink=${CATALINA_HOME}/logs/catalina.out \
- ${CATALINA_HOME}/logs/catalina.%Y-%m-%d.out < ${CATALINA_HOME}/fifo/catalina.fifo &
+cd ${CATALINA_HOME}/logs && cronolog --symlink=./catalina.out \
+ ./catalina.%Y-%m-%d.out < ${CATALINA_HOME}/fifo/catalina.fifo &
 
 # Start Tomcat with log rotation fifo, and run in the pid 1
 exec catalina.sh run >> ${CATALINA_HOME}/fifo/catalina.fifo 2>&1
