@@ -134,7 +134,7 @@ JAR_FILE=$(ls -1 *.jar 2>/dev/null | head -n 1)
 
 # 3. Check if JAR file exists
 if [ -z "${JAR_FILE}" ]; then
-    echo "Error: No JAR file found in ${APP_HOME}"
+    echo "Error: No JAR file found in ${APP_PKGS_HOME}"
     exit 1
 fi
 
