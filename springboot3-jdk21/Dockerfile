@@ -33,7 +33,10 @@ EOF
 
 # 需要有共享的变量提到最上面来了
 ENV ARTHAS_HOME=/opt/arthas
+# 定义应用目录
 ENV APP_HOME=/opt/app
+# 定义程序包的位置
+ENV APP_PKGS_HOME=${APP_HOME}/pkgs
 
 # ============================================================
 # 2.1 安装常用工具：curl, vim, htop, telnet, procps, net-tools, cronolog 等
@@ -89,6 +92,7 @@ RUN set -eux; \
 # ============================================================
 RUN mkdir -p ${APP_HOME}/logs
 RUN mkdir -p ${APP_HOME}/bin
+RUN mkdir -p ${APP_PKGS_HOME}
 
 # ============================================================
 # 5. 优化 JVM 参数（适用于容器化部署的 JDK 21）
@@ -122,8 +126,8 @@ RUN cat > "${APP_HOME}/bin/launch.sh" <<'EOF'
 #!/bin/bash
 # copyright (c) 2026, Frankzhou <frankzhou007@163.com>
 
-# 1. Change to the app home directory
-cd ${APP_HOME}
+# 1. Change to the app package home directory
+cd ${APP_PKGS_HOME}
 
 # 2. Find the JAR file in the app home directory
 JAR_FILE=$(ls -1 *.jar 2>/dev/null | head -n 1)
@@ -143,13 +147,15 @@ mkfifo ${APP_HOME}/fifo/catalina.fifo
 
 # 6. Use Cronolog to rotate logs from FIFO
 cd ${APP_HOME}/logs && cronolog --symlink=./catalina.out \
- ./catalina.%Y-%m-%d.out < ${APP_HOME}/fifo/catalina.fifo &
+    ./catalina.%Y-%m-%d.out < ${APP_HOME}/fifo/catalina.fifo &
 
 # 7. Start Tomcat with log rotation fifo, and run in the pid 1
 echo "Starting ${JAR_FILE} ..."
-exec java ${JAVA_OPTS} -jar ${JAR_FILE} "$@" >> ${APP_HOME}/fifo/catalina.fifo 2>&1
+exec java ${JAVA_OPTS} -jar ${APP_PKGS_HOME}/${JAR_FILE} \
+    >> ${APP_HOME}/fifo/catalina.fifo 2>&1
 EOF
 RUN chmod +x "${APP_HOME}/bin/launch.sh"
+ENV PATH="${APP_HOME}/bin:${PATH}"
 
 # ============================================================
 # 8. 暴露端口 & 启动
