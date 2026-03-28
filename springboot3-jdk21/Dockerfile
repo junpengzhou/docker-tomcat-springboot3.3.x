@@ -156,7 +156,8 @@ cd ${APP_HOME}/logs && cronolog --symlink=./catalina.out \
 
 # 7. Start Tomcat with log rotation fifo, and run in the pid 1
 echo "Starting ${APP_PKGS_HOME}/${JAR_FILE} ..."
-exec java ${JAVA_OPTS} -jar ${APP_PKGS_HOME}/${JAR_FILE}
+exec java ${JAVA_OPTS} -jar ${APP_PKGS_HOME}/${JAR_FILE} \
+    >> ${APP_HOME}/fifo/catalina.fifo 2>&1
 EOF
 RUN chmod +x "${APP_HOME}/bin/launch.sh"
 ENV PATH="${APP_HOME}/bin:${PATH}"
