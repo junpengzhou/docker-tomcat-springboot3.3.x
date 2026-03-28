@@ -88,6 +88,7 @@ RUN set -eux; \
 # 4. 创建应用目录
 # ============================================================
 RUN mkdir -p ${APP_HOME}/logs
+RUN mkdir -p ${APP_HOME}/bin
 
 # ============================================================
 # 5. 优化 JVM 参数（适用于容器化部署的 JDK 21）
@@ -101,7 +102,7 @@ ENV JAVA_OPTS="-Dfile.encoding=UTF-8 \
 -XX:AutoBoxCacheMax=100000 \
 -Djava.security.egd=file:/dev/./urandom \
 -XX:+HeapDumpOnOutOfMemoryError \
--XX:HeapDumpPath=${CATALINA_HOME}/logs/heap_dump.hprof"
+-XX:HeapDumpPath=${APP_HOME}/logs/heap_dump.hprof"
 
 # ============================================================
 # 6. 安装 Arthas（阿里巴巴 Java 诊断工具）
