@@ -1,0 +1,12 @@
+server:
+  port: 8080
+spring:
+  main:
+    allow-bean-definition-overriding: true
+    allow-circular-references: true
+  application:
+    name: springboot3-demo
+  profiles:
+    active: prd
+logging:
+  config: classpath:logback-spring.xml
