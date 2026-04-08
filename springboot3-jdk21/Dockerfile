@@ -143,21 +143,32 @@ if [ -z "${JAR_FILE}" ]; then
     exit 1
 fi
 
-# 4. Create fifo directory if not exists
-mkdir -p ${APP_HOME}/fifo
+# 4. Create logrotate config for catalina.out
+cat > /etc/logrotate.d/catalina <<LOGROTATE_CONF
+${APP_HOME}/logs/catalina.out {
+    daily
+    missingok
+    notifempty
+    copytruncate
+    dateext
+    dateformat .%Y-%m-%d
+    extension .out
+    rotate 30
+}
+LOGROTATE_CONF
 
-# 5. Create FIFO for log rotation
-rm -f ${APP_HOME}/fifo/catalina.fifo
-mkfifo ${APP_HOME}/fifo/catalina.fifo
+# 5. Background logrotate trigger loop (check every 1 hour)
+(
+    while true; do
+        sleep 3600
+        /usr/sbin/logrotate /etc/logrotate.d/catalina --state ${APP_HOME}/logs/.logrotate.state
+    done
+) &
 
-# 6. Use Cronolog to rotate logs from FIFO
-cd ${APP_HOME}/logs && cronolog --symlink=./catalina.out \
-    ./catalina.%Y-%m-%d.out < ${APP_HOME}/fifo/catalina.fifo &
-
-# 7. Start Tomcat with log rotation fifo, and run in the pid 1
+# 6. Start application, write logs to catalina.out, and run as PID 1
 echo "Starting ${APP_PKGS_HOME}/${JAR_FILE} ..."
 exec java ${JAVA_OPTS} -jar ${APP_PKGS_HOME}/${JAR_FILE} \
-    >> ${APP_HOME}/fifo/catalina.fifo 2>&1
+    >> ${APP_HOME}/logs/catalina.out 2>&1
 EOF
 RUN chmod +x "${APP_HOME}/bin/launch.sh"
 ENV PATH="${APP_HOME}/bin:${PATH}"

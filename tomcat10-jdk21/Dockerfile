@@ -204,19 +204,32 @@ RUN mkdir -p "${ARTHAS_HOME}" \
 # ============================================================
 RUN cat > "${CATALINA_HOME}/bin/launch.sh" <<EOF
 #!/bin/bash
-# Create fifo directory if not exists
-mkdir -p ${CATALINA_HOME}/fifo
+# copyright (c) 2026, Frankzhou <frankzhou007@163.com>
 
-# Create FIFO for log rotation
-rm -f ${CATALINA_HOME}/fifo/catalina.fifo
-mkfifo ${CATALINA_HOME}/fifo/catalina.fifo
+# 1. Create logrotate config for catalina.out
+cat > /etc/logrotate.d/catalina <<LOGROTATE_CONF
+${CATALINA_HOME}/logs/catalina.out {
+    daily
+    missingok
+    notifempty
+    copytruncate
+    dateext
+    dateformat .%Y-%m-%d
+    extension .out
+    rotate 30
+}
+LOGROTATE_CONF
 
-# Use Cronolog to rotate logs from FIFO
-cd ${CATALINA_HOME}/logs && cronolog --symlink=./catalina.out \
- ./catalina.%Y-%m-%d.out < ${CATALINA_HOME}/fifo/catalina.fifo &
+# 2. Background logrotate trigger loop (check every 1 hour)
+(
+    while true; do
+        sleep 3600
+        /usr/sbin/logrotate /etc/logrotate.d/catalina --state ${CATALINA_HOME}/logs/.logrotate.state
+    done
+) &
 
-# Start Tomcat with log rotation fifo, and run in the pid 1
-exec catalina.sh run >> ${CATALINA_HOME}/fifo/catalina.fifo 2>&1
+# 3. Start Tomcat, write logs to catalina.out, and run as PID 1
+exec catalina.sh run >> ${CATALINA_HOME}/logs/catalina.out 2>&1
 EOF
 RUN chmod +x "${CATALINA_HOME}/bin/launch.sh"
 
