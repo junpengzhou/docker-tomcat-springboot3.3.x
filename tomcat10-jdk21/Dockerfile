@@ -86,15 +86,14 @@ RUN set -eux; \
 # ============================================================
 # 4. 安装 Tomcat 10.1.x（适配 Spring Boot 3.3.x / Jakarta EE 10）
 # ============================================================
-ENV TOMCAT_VERSION=10.1.53
 ENV CATALINA_HOME=/opt/tomcat
 ENV CATALINA_BASE="${CATALINA_HOME}"
 ENV PATH="${CATALINA_HOME}/bin:${PATH}"
 
+COPY tomcat.tar.gz /tmp/tomcat.tar.gz
+
 RUN set -eux; \
-    curl -fsSL -o /tmp/tomcat.tar.gz \
-        "https://dlcdn.apache.org/tomcat/tomcat-10/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz" \
-    && mkdir -p "${CATALINA_HOME}" \
+    mkdir -p "${CATALINA_HOME}" \
     && tar -zxf /tmp/tomcat.tar.gz --strip-components=1 -C "${CATALINA_HOME}" \
     && rm -f /tmp/tomcat.tar.gz \
     && rm -rf "${CATALINA_HOME}/webapps/ROOT" \
@@ -102,7 +101,7 @@ RUN set -eux; \
                "${CATALINA_HOME}/webapps/examples" \
                "${CATALINA_HOME}/webapps/host-manager" \
                "${CATALINA_HOME}/webapps/manager" \
-               "${CATALINA_HOME}/temp/*" \
+               "${CATALINA_HOME}/temp/"* \
     && chmod +x "${CATALINA_HOME}/bin/"*.sh
 
 # ============================================================
