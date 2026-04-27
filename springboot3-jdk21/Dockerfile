@@ -103,6 +103,8 @@ COPY springboot3-demo.jar ${APP_PKGS_HOME}/
 # 6. 优化 JVM 参数（适用于容器化部署的 JDK 21）
 # ============================================================
 ENV JAVA_OPTS="-Dfile.encoding=UTF-8 \
+-Dstdout.encoding=UTF-8 \
+-Dstderr.encoding=UTF-8 \
 -Xms512m \
 -XX:MetaspaceSize=256m \
 -XX:MaxMetaspaceSize=600m \
