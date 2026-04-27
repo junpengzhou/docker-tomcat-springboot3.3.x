@@ -35,7 +35,7 @@ EOF
 ENV ARTHAS_HOME=/opt/arthas
 
 # ============================================================
-# 2.1 安装常用工具：curl, vim, htop, telnet, procps, net-tools, cronolog 等
+# 2.1 安装常用工具：curl, vim, htop, telnet, procps, net-tools, logrotate 等
 # ============================================================
 RUN microdnf install -y \
         curl wget tar gzip unzip \
@@ -47,7 +47,7 @@ RUN microdnf install -y \
         findutils \
         shadow-utils \
         fontconfig \
-        cronolog \
+        logrotate \
     && microdnf clean all
 
 # ============================================================

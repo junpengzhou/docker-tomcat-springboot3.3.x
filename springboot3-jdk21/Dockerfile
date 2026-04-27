@@ -39,7 +39,7 @@ ENV APP_HOME=/opt/app
 ENV APP_PKGS_HOME=${APP_HOME}/pkgs
 
 # ============================================================
-# 2.1 安装常用工具：curl, vim, htop, telnet, procps, net-tools, cronolog 等
+# 2.1 安装常用工具：curl, vim, htop, telnet, procps, net-tools, logrotate 等
 # ============================================================
 RUN microdnf install -y \
         curl wget tar gzip unzip \
@@ -51,7 +51,7 @@ RUN microdnf install -y \
         findutils \
         shadow-utils \
         fontconfig \
-        cronolog \
+        logrotate \
     && microdnf clean all
 
 # ============================================================
