@@ -67,6 +67,21 @@ alias arthas='java -jar ${ARTHAS_HOME}/arthas-boot.jar'
 EOF
 
 # ============================================================
+# 2.2 安装 FFmpeg（静态二进制，无系统依赖，全编解码器支持）
+# ============================================================
+RUN microdnf install -y xz && microdnf clean all \
+    && curl -fsSL -o /tmp/ffmpeg.tar.xz https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz \
+    && tar -xJf /tmp/ffmpeg.tar.xz -C /tmp \
+    && cp /tmp/ffmpeg-*/ffmpeg /tmp/ffmpeg-*/ffprobe /usr/local/bin/ \
+    && chmod +x /usr/local/bin/ffmpeg /usr/local/bin/ffprobe \
+    && rm -rf /tmp/ffmpeg* \
+    && ffmpeg -version
+
+RUN mkdir -p /usr/local/ffmpeg/bin \
+  && ln -s /usr/local/bin/ffmpeg /usr/local/ffmpeg/bin/ffmpeg \
+  && ln -s /usr/local/bin/ffprobe /usr/local/ffmpeg/bin/ffprobe
+
+# ============================================================
 # 3. 安装 JDK 21（Eclipse Temurin / Adoptium）
 # ============================================================
 ENV JAVA_VERSION=21
@@ -90,7 +105,7 @@ ENV CATALINA_HOME=/opt/tomcat
 ENV CATALINA_BASE="${CATALINA_HOME}"
 ENV PATH="${CATALINA_HOME}/bin:${PATH}"
 
-COPY tomcat.tar.gz /tmp/tomcat.tar.gz
+COPY ../tomcat10-jdk21/tomcat.tar.gz /tmp/tomcat.tar.gz
 
 RUN set -eux; \
     mkdir -p "${CATALINA_HOME}" \
