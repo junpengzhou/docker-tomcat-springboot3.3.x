@@ -106,7 +106,7 @@ ENV CATALINA_HOME=/opt/tomcat
 ENV CATALINA_BASE="${CATALINA_HOME}"
 ENV PATH="${CATALINA_HOME}/bin:${PATH}"
 
-COPY ../tomcat10-jdk21/tomcat.tar.gz /tmp/tomcat.tar.gz
+COPY tomcat.tar.gz /tmp/tomcat.tar.gz
 
 RUN set -eux; \
     mkdir -p "${CATALINA_HOME}" \
