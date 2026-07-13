@@ -49,6 +49,7 @@ RUN microdnf install -y \
         shadow-utils \
         fontconfig \
         logrotate \
+        nspr nss libxcb dbus-libs \
     && microdnf clean all
 
 # ============================================================
