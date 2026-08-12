@@ -44,7 +44,7 @@ ENV APP_PKGS_HOME=${APP_HOME}/pkgs
 RUN microdnf install -y \
         curl wget tar gzip unzip \
         vim-enhanced \
-        iputils \
+        iputils iproute procps-ng tcpdump \
         htop \
         telnet \
         net-tools \
