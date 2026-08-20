@@ -170,6 +170,7 @@ ENV JAVA_OPTS="-Dfile.encoding=UTF-8 \
 -Dstdout.encoding=UTF-8 \
 -Dstderr.encoding=UTF-8 \
 -Xms512m \
+-XX:MaxRAMPercentage=75.0 \
 -XX:MetaspaceSize=256m \
 -XX:MaxMetaspaceSize=600m \
 -XX:+UseG1GC \

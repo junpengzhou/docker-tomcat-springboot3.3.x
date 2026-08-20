@@ -1,4 +1,4 @@
-FROM jeepzhou007/tomcat10-jdk21:latest
+FROM jeepzhou007/tomcat10-jdk21
 
 # ============================================================
 # 2. 额外 安装 FFmpeg（静态二进制，无系统依赖，全编解码器支持）
