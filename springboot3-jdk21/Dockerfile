@@ -3,10 +3,6 @@
 # ============================================================
 FROM almalinux:10-minimal AS base
 
-# ============================================================
-# 维护信息公告
-# ============================================================
-LABEL maintainer="Frankzhou <frankzhou007@163.com>"
 
 # ============================================================
 # 1. 配置阿里云 yum 源
@@ -134,7 +130,6 @@ RUN mkdir -p "${ARTHAS_HOME}" \
 # ============================================================
 RUN cat > "${APP_HOME}/bin/launch.sh" <<'EOF'
 #!/bin/bash
-# copyright (c) 2026, Frankzhou <frankzhou007@163.com>
 
 # 1. Change to the app package home directory
 cd ${APP_PKGS_HOME}
