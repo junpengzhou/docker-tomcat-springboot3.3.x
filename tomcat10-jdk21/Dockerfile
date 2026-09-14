@@ -198,26 +198,29 @@ RUN mkdir -p "${ARTHAS_HOME}" \
     && chmod +x "${ARTHAS_HOME}/arthas-boot.jar" 2>/dev/null || true
 
 # ============================================================
-# 8. 创建我的自定义启动脚本
+# 8. 创建日志切割脚本 Create logrotate config for catalina.out
+# ============================================================
+RUN cat > /etc/logrotate.d/catalina <<LOGROTATE_CONF
+    ${CATALINA_HOME}/logs/catalina.out {
+        daily
+        missingok
+        notifempty
+        copytruncate
+        compress
+        dateext
+        dateformat .%Y-%m-%d
+        extension .out
+        rotate 30
+    }
+LOGROTATE_CONF
+
+# ============================================================
+# 9. 创建我的自定义启动脚本
 # ============================================================
 RUN cat > "${CATALINA_HOME}/bin/launch.sh" <<EOF
 #!/bin/bash
 
-# 1. Create logrotate config for catalina.out
-cat > /etc/logrotate.d/catalina <<LOGROTATE_CONF
-${CATALINA_HOME}/logs/catalina.out {
-    daily
-    missingok
-    notifempty
-    copytruncate
-    dateext
-    dateformat .%Y-%m-%d
-    extension .out
-    rotate 30
-}
-LOGROTATE_CONF
-
-# 2. Background logrotate trigger loop (check every 1 hour)
+# 1. Background logrotate trigger loop (check every 1 hour)
 (
     while true; do
         sleep 3600
@@ -225,13 +228,13 @@ LOGROTATE_CONF
     done
 ) &
 
-# 3. Start Tomcat, write logs to catalina.out, and run as PID 1
+# 2. Start Tomcat, write logs to catalina.out, and run as PID 1
 exec catalina.sh run >> ${CATALINA_HOME}/logs/catalina.out 2>&1
 EOF
 RUN chmod +x "${CATALINA_HOME}/bin/launch.sh"
 
 # ============================================================
-# 9. 暴露端口 & 启动
+# 10. 暴露端口 & 启动
 # ============================================================
 EXPOSE 8080
 

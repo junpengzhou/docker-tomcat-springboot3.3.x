@@ -126,7 +126,24 @@ RUN mkdir -p "${ARTHAS_HOME}" \
     && chmod +x "${ARTHAS_HOME}/arthas-boot.jar" 2>/dev/null || true
 
 # ============================================================
-# 8. 创建我的自定义启动脚本
+# 8. 创建日志切割脚本 Create logrotate config for catalina.out
+# ============================================================
+cat > /etc/logrotate.d/catalina <<LOGROTATE_CONF
+${APP_HOME}/logs/catalina.out {
+    daily
+    missingok
+    notifempty
+    copytruncate
+    compress
+    dateext
+    dateformat .%Y-%m-%d
+    extension .out
+    rotate 30
+}
+LOGROTATE_CONF
+
+# ============================================================
+# 9. 创建我的自定义启动脚本
 # ============================================================
 RUN cat > "${APP_HOME}/bin/launch.sh" <<'EOF'
 #!/bin/bash
@@ -143,21 +160,7 @@ if [ -z "${JAR_FILE}" ]; then
     exit 1
 fi
 
-# 4. Create logrotate config for catalina.out
-cat > /etc/logrotate.d/catalina <<LOGROTATE_CONF
-${APP_HOME}/logs/catalina.out {
-    daily
-    missingok
-    notifempty
-    copytruncate
-    dateext
-    dateformat .%Y-%m-%d
-    extension .out
-    rotate 30
-}
-LOGROTATE_CONF
-
-# 5. Background logrotate trigger loop (check every 1 hour)
+# 4. Background logrotate trigger loop (check every 1 hour)
 (
     while true; do
         sleep 3600
@@ -165,7 +168,7 @@ LOGROTATE_CONF
     done
 ) &
 
-# 6. Start application, write logs to catalina.out, and run as PID 1
+# 5. Start application, write logs to catalina.out, and run as PID 1
 echo "Starting ${APP_PKGS_HOME}/${JAR_FILE} ..."
 exec java ${JAVA_OPTS} -jar ${APP_PKGS_HOME}/${JAR_FILE} \
     >> ${APP_HOME}/logs/catalina.out 2>&1
@@ -174,7 +177,7 @@ RUN chmod +x "${APP_HOME}/bin/launch.sh"
 ENV PATH="${APP_HOME}/bin:${PATH}"
 
 # ============================================================
-# 9. 暴露端口 & 启动
+# 10. 暴露端口 & 启动
 # ============================================================
 EXPOSE 8080
 
