@@ -1,7 +1,7 @@
 FROM alpine:3.19
 
-# gost v2.12.1, 轻量级代理工具, 支持 HTTP / SOCKS5 + 用户认证
-ARG GOST_VERSION=2.12.1
+# gost v2.12.0, 轻量级代理工具, 支持 HTTP / SOCKS5 + 用户认证
+ARG GOST_VERSION=2.12.0
 RUN apk add --no-cache curl ca-certificates && \
     curl -sL "https://github.com/ginuerzh/gost/releases/download/v${GOST_VERSION}/gost_${GOST_VERSION}_linux_amd64.tar.gz" \
     | tar xz -C /usr/local/bin/ gost && \
