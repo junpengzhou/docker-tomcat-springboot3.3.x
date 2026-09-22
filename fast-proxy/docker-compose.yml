@@ -2,16 +2,15 @@ version: '3.8'
 services:
   fast-proxy:
     build: .
-    # 如果已构建镜像, 可改用: image: fast-proxy:latest
     container_name: fast-proxy
+    image: fast-proxy:latest
     restart: unless-stopped
     environment:
       - PROXY_MODE=http
       - PROXY_USER=admin
-      - PROXY_PASS=changeMeInProdUse@2026
+      - PROXY_PASS=changeMeInProdUse
       - PROXY_PORT=1080
     ports:
-      # 宿主机 1080 端口映射, 本地开发机通过 192.168.50.100:1080 访问代理
       - "1080:1080"
     networks:
       - app-net
