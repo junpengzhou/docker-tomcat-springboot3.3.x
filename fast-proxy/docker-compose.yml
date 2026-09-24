@@ -1,19 +1,42 @@
-version: '3.8'
+name: 'fast-proxy'
 services:
   fast-proxy:
-    build: .
+    # 3proxy: 纯 C 实现的轻量 HTTP 代理, 空闲内存 ~4MB (gost ~20MB 的 1/5)
+    # 镜像基于 scratch, 无 OS 无 shell, 攻击面最小
+    # 支持 HTTP/HTTPS + SOCKS5 + Basic Auth + DNS 缓存 + 连接复用
+    image: ghcr.io/tarampampam/3proxy:2
     container_name: fast-proxy
-    image: fast-proxy:latest
-    restart: unless-stopped
+    restart: always
     environment:
-      - PROXY_MODE=http
-      - PROXY_USER=admin
-      - PROXY_PASS=changeMeInProdUse
+      # HTTP 代理端口 (映射到宿主机 1080)
       - PROXY_PORT=1080
+      # SOCKS5 端口设为 -1 禁用, 只用 HTTP 代理
+      - SOCKS_PORT=1081
+      # 代理认证 (OkHttp 端 Credentials.basic 不受特殊字符影响, 不需要 URL 编码)
+      - PROXY_LOGIN=admin
+      - PROXY_PASS=ChangeMeToStrong2026
+      # 最大连接数, 默认 512, 开发联调足够
+      - MAX_CONNECTIONS=2048
+      # DNS 缓存大小, 减少重复 DNS 查询
+      - DNS_CACHE_SIZE=65536
+      # 主备 DNS (使用 同环境的 DNS)
+      - PRIMARY_RESOLVER=1.0.0.1
+      - SECONDARY_RESOLVER=8.8.8.8
+      # 关键性能参数: TCP_NODELAY 禁用 Nagle 算法, 减少小包延迟
+      - PROXY_EXTRA_ARGS=-ocTCP_NODELAY -osTCP_NODELAY
+      # 关闭日志输出, 减少 IO 开销 (调试时可改为 /tmp/3proxy.log)
+      - LOG_OUTPUT=/dev/null
     ports:
-      - "1080:1080"
+      # 宿主机 1080 端口映射, 本地开发机通过 192.168.50.100:1080 访问代理
+      - "1080:1080/tcp"
+      - "1081:1081/tcp"
     networks:
       - app-net
+    # 文件描述符上限, 3proxy 每个连接需要 2 个 fd
+    ulimits:
+      nofile:
+        soft: 2048
+        hard: 2048
 
 networks:
   app-net:
